@@ -51,6 +51,7 @@ class Rooms(Base):
 
     id = Column(Integer, primary_key=True)
     host_id = Column(Integer, ForeignKey('host.id'))
+    room_name = Column(String)
     attributes = Column(String)
     price = Column(Integer)
     status = Column(String)
@@ -58,7 +59,7 @@ class Rooms(Base):
     to_time = Column(String)
 
 
-class Free_rooms(Base):
+class FreeRooms(Base):
     __tablename__ = 'free_rooms'
 
     id = Column(Integer, primary_key=True)
@@ -96,11 +97,18 @@ for q in [1,2,3]:
 
 session.commit()
 
-for q in [4,6,4]:
-    guest = Guest(user_id = q, possibility = 'reservation')
-    session.add(guest)
-guest = Guest(user_id = 5, possibility = 'availability')
-session.add(guest)
+
+guest1 = Guest(user_id = 4, possibility = 'reservation')
+session.add(guest1)
+
+guest2 = Guest(user_id = 6, possibility = 'reservation')
+session.add(guest2)
+
+guest3 = Guest(user_id = 4, possibility = 'reservation')
+session.add(guest3)
+
+guest4 = Guest(user_id = 5, possibility = 'availability')
+session.add(guest4)
 
 session.commit()
 
@@ -114,16 +122,27 @@ session.add(room)
 session.commit()
 
 
-for q in [1,2,3]:
-    free_room = Free_rooms(room_id = q)
-    session.add(free_room)
+
+free_room1 = FreeRooms(room_id = 1)
+session.add(free_room1)
+
+free_room2 = FreeRooms(room_id = 2)
+session.add(free_room2)
+            
+free_room3 = FreeRooms(room_id = 3)
+session.add(free_room3)
 
 session.commit()
 
 
-for q in [1,2,3]:
-    availability = Availability(guest_id = 2, free_room_id = q)
-    session.add(availability)
+availability = Availability(guest_id = 2, free_room_id = 1)
+session.add(availability)
+
+availability = Availability(guest_id = 2, free_room_id = 2)
+session.add(availability)
+
+availability = Availability(guest_id = 2, free_room_id = 3)
+session.add(availability)
 
 session.commit()
 
@@ -158,3 +177,9 @@ room3 = session.query(Rooms).filter(Rooms.id == 3)
 room3.from_time = '25.06.2023'
 room3.to_time = '30.06.2023'
 session.commit()
+
+
+result = session.query(Users,Guest).join(Guest).all()
+
+for users,guest in result:
+    print(users.id, users.name)
