@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 
 
-engine = create_engine('postgresql://user:password@localhost:5432/task1')
+engine = create_engine('postgresql://user:password@localhost:5432/task2')
 
 
 Session = sessionmaker(bind=engine)
@@ -85,32 +85,30 @@ for q in name_host:
 
 session.commit()
 
+
+
 for q in name_guest:
     new_guest = Users(name = q, user_type = 'guest')
     session.add(new_guest)
 
 session.commit()
 
-for q in [1,2,3]:
-    host = Host(user_id = q)
+
+all_guest_users = session.query(Users).filter(Users.user_type=='guest').all()
+for users in all_guest_users:
+    guest = Guest(user_id = users.id, possibility = 'reservation')
+    session.add(guest)
+
+session.commit()
+
+
+all_host_users = session.query(Users).filter(Users.user_type=='host').all()
+for users in all_guest_users:
+    host = Host(user_id = users.id)
     session.add(host)
 
 session.commit()
 
-
-guest1 = Guest(user_id = 4, possibility = 'reservation')
-session.add(guest1)
-
-guest2 = Guest(user_id = 6, possibility = 'reservation')
-session.add(guest2)
-
-guest3 = Guest(user_id = 4, possibility = 'reservation')
-session.add(guest3)
-
-guest4 = Guest(user_id = 5, possibility = 'availability')
-session.add(guest4)
-
-session.commit()
 
 
 room = Rooms(host_id = 1, attributes = 'A', price = 100, status = 'Free', from_time = None, to_time = None)
@@ -122,64 +120,37 @@ session.add(room)
 session.commit()
 
 
-
-free_room1 = FreeRooms(room_id = 1)
-session.add(free_room1)
-
-free_room2 = FreeRooms(room_id = 2)
-session.add(free_room2)
-            
-free_room3 = FreeRooms(room_id = 3)
-session.add(free_room3)
-
-session.commit()
-
-
-availability = Availability(guest_id = 2, free_room_id = 1)
-session.add(availability)
-
-availability = Availability(guest_id = 2, free_room_id = 2)
-session.add(availability)
-
-availability = Availability(guest_id = 2, free_room_id = 3)
-session.add(availability)
+all_free_rooms = session.query(Rooms).filter(Rooms.status=='Free').all()
+for room in all_free_rooms:
+    free_room = FreeRooms(room_id = room.id)
+    session.add(free_room)
 
 session.commit()
 
 
 reservation = Reservation(guest_id = 1, free_room_id = 1, from_time='25.06.2023', to_time = '27.06.2023')
 session.add(reservation)
-reservation = Reservation(guest_id = 3, free_room_id = 2, from_time='25.06.2023', to_time = '28.06.2023')
+reservation = Reservation(guest_id = 2, free_room_id = 2, from_time='25.06.2023', to_time = '28.06.2023')
 session.add(reservation)
-reservation = Reservation(guest_id = 4, free_room_id = 3, from_time='25.06.2023', to_time = '30.06.2023')
+reservation = Reservation(guest_id = 3, free_room_id = 3, from_time='25.06.2023', to_time = '30.06.2023')
 session.add(reservation)
 
 session.commit()
 
+changing_status = session.query(Reservation).all()
+for status in changing_status:
+    rooms = session.query(Rooms).all()
+    for room in rooms:
+        if room.id == status.free_room_id:
+            room.status = 'Occupied'
+            room.from_time = status.from_time
+            room.to_time = status.to_time
+        session.commit()
 
-occupied = session.query(Rooms).all()
-for q in occupied:
-    q.status = 'Occupied'
-    session.commit()
-
-
-room1 = session.query(Rooms).filter(Rooms.id == 1)
-room1.from_time = '25.06.2023'
-room1.to_time = '27.06.2023'
-session.commit()
-
-room2 = session.query(Rooms).filter(Rooms.id == 2)
-room2.from_time = '25.06.2023'
-room2.to_time = '28.06.2023'
-session.commit()
-
-room3 = session.query(Rooms).filter(Rooms.id == 3)
-room3.from_time = '25.06.2023'
-room3.to_time = '30.06.2023'
-session.commit()
-
-
-result = session.query(Users,Guest).join(Guest).all()
-
-for users,guest in result:
-    print(users.id, users.name)
+semi_result = session.query(Guest,Reservation).join(Reservation).all()
+result = session.query(Users).all()
+for q in result:
+    for guest,reservation in semi_result:
+        if q.id == guest.user_id:
+            res = session.query(Users).filter(Users.id == q.id).first()
+            print(res.name, res.id)
